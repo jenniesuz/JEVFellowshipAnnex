@@ -1,0 +1,142 @@
+# script to estimate power to compare JEV seroprevalence between predicted high and low risk areas
+
+start.time <- Sys.time()
+# load packages
+library(GLMMmisc) # available via devtools::install_github("pcdjohnson/GLMMmisc")
+library(lme4)
+library(parallel)
+library(binom)
+library(ggplot2)
+library(plyr)
+
+# no of data sets to simulate
+nsim <- 1000
+
+# sampling / design choices
+n.village <- 30
+n.hh <- 20         # per village
+n <- 3             # no of animals per household
+
+# effect size: OR representing difference in seroprevalence 
+# between high and low risk villages
+OR <- 3
+
+# load parameter estimates
+par.tab <- read.csv("parameter.estimates.csv", row.names = 1)
+
+# simulate JEV serology data in each species
+dat <- expand.grid(hh = 1:n.hh, village = 1:n.village, n = n)
+print(sum(dat$n))
+# allocate villages to high and low prevalence in 1:1 ratio 
+dat$risk.level <- dat$village %% 2 - 0.5
+# simulate seropositives
+simdata <-
+  sim.glmm(
+    design.data = dat, 
+    fixed.eff = 
+      list(
+        intercept = par.tab["(Intercept)",1],
+        risk.level = log(OR)),
+    distribution = "binomial",
+    rand.V = c(hh = par.tab["barcode_hh",1], 
+               village = par.tab["village",1]))
+
+
+#************function to visualise data************
+
+vizDatFunc <- function(simdat=simdata){
+summariseVillage <- ddply(simdat,.(village,risk.level),summarise,denom=sum(n),num=sum(response))
+binomVillage <- binom.confint(summariseVillage$num
+                              ,summariseVillage$denom,methods="exact")
+binomVillage$villageNum <- 1:length(binomVillage[,1])
+binomVillage$risk.level <- as.factor(summariseVillage$risk.level)
+
+ggplot(binomVillage) +
+  geom_point(aes(x=villageNum,y=mean*100,col=risk.level)) +
+  geom_errorbar(aes(x=villageNum,ymin=lower*100,ymax=upper*100))
+
+
+summariseRisk <- ddply(simdat,.(risk.level),summarise
+                       ,denom=sum(n)
+                       ,num=sum(response))
+binomRisk <- binom.confint(summariseRisk$num,summariseRisk$denom,methods="exact")
+
+ggplot(binomRisk) +
+  geom_point(aes(x=1:2,y=mean*100)) +
+  geom_errorbar(aes(x=1:2,ymin=lower*100,ymax=upper*100))
+}
+#**************************************
+
+n.village <- 30
+n.hh <- 20         # per village
+n <- 3             # no of animals per household
+OR <- 3
+par.tab["(Intercept)",] <- -2.197
+
+# simulate RVFV serology data in each species
+dat <- expand.grid(hh = 1:n.hh, village = 1:n.village, n = n)
+print(sum(dat$n))
+# allocate villages to high and low prevalence in 1:1 ratio 
+dat$risk.level <- dat$village %% 2 - 0.5
+# simulate seropositives
+simdata <-
+  sim.glmm(
+    design.data = dat, 
+    fixed.eff = 
+      list(
+        intercept = par.tab["(Intercept)",1],
+        risk.level = log(OR)),
+    distribution = "binomial",
+    rand.V = c(hh = par.tab["barcode_hh",1], 
+               village = par.tab["village",1]))
+
+
+vizDatFunc()
+
+#**********************************
+# function to simulate data and estimate p-value for null hypothesis 
+# that high and low risk areas have the same seroprevalence
+res.tab.fn <- function(...) {
+    # create template data set
+    dat <- expand.grid(hh = 1:n.hh, village = 1:n.village, n = n)
+    print(sum(dat$n))
+    # allocate villages to high and low prevalence in 1:1 ratio 
+    dat$risk.level <- dat$village %% 2 - 0.5
+    # simulate seropositives
+    simdat <-
+      sim.glmm(
+        design.data = dat, 
+        fixed.eff = 
+          list(
+            intercept = par.tab["(Intercept)",1],
+            risk.level = log(OR)),
+        distribution = "binomial",
+        rand.V = c(hh = par.tab["barcode_hh",1], 
+                   village = par.tab["village",1]))
+    
+    fit <- glmer(cbind(response, n - response) ~ risk.level + (1 | hh) +(1 | village), family = binomial, data = simdat)
+    fit0 <- update(fit, ~ . - risk.level)
+    #coef(summary(fit))["risk.level", "Pr(>|z|)"] # Wald P not reliable - gives inflated type 1 error
+    anova(fit, fit0)[2, "Pr(>Chisq)"]
+}
+
+
+
+
+#************assume c. 20 - 40% prevalence in high risk areas***********
+# and three fold difference in risk
+# and OR of 3
+# repeat simulations many times and calculate p-value
+n.village <- 24
+n.hh <- 20         # per village
+n <- 3             # no of animals per household
+# 1800 animals for 30 villages or 1440 for 24 villages
+par.tab["(Intercept)",] <- -2.197
+
+sim.res <- mclapply(1:nsim, res.tab.fn)
+
+# estimate power
+apply(do.call("rbind", sim.res) < 0.05, 2, mean)
+# 0.849
+
+
