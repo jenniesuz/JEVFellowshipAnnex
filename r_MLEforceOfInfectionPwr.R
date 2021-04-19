@@ -46,11 +46,11 @@ numHosts <- 60
 ageGroups <- 7
 maxAge <- 20
 #************************************************************
-hosts50 <- repSimsFunc(trueFoi1=trueFoi1,trueFoi2=trueFoi2,trueFoi3=trueFoi3
+hosts <- repSimsFunc(trueFoi1=trueFoi1,trueFoi2=trueFoi2,trueFoi3=trueFoi3
                         ,numHosts=numHosts
                         ,ageGroups=ageGroups
                         ,maxAge=maxAge)
-h50 <- data.frame(hosts50)
-length(h50$p1[h50$p1>0]) 
-length(h50$p2[h50$p2>0])
+h <- data.frame(hosts)
+length(h$p1[h$p1>0]) 
+length(h$p2[h$p2>0])
 

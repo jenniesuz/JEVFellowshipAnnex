@@ -22,7 +22,8 @@ n <- 3             # no of animals per household
 OR <- 3
 
 # load parameter estimates
-par.tab <- read.csv("parameter.estimates.csv", row.names = 1)
+
+#par.tab <- read.csv("parameter.estimates.csv", row.names = 1)
 
 # simulate JEV serology data in each species
 dat <- expand.grid(hh = 1:n.hh, village = 1:n.village, n = n)
@@ -35,11 +36,12 @@ simdata <-
     design.data = dat, 
     fixed.eff = 
       list(
-        intercept = par.tab["(Intercept)",1],
+        intercept = -3.53, #par.tab["(Intercept)",1],
         risk.level = log(OR)),
     distribution = "binomial",
-    rand.V = c(hh = par.tab["barcode_hh",1], 
-               village = par.tab["village",1]))
+    rand.V = c(hh = 0.4 #par.tab["barcode_hh",1], 
+               ,village = 0.6 #par.tab["village",1]
+               ))
 
 
 #************function to visualise data************
@@ -71,7 +73,7 @@ n.village <- 30
 n.hh <- 20         # per village
 n <- 3             # no of animals per household
 OR <- 3
-par.tab["(Intercept)",] <- -2.197
+inter <- -2.197
 
 # simulate RVFV serology data in each species
 dat <- expand.grid(hh = 1:n.hh, village = 1:n.village, n = n)
@@ -84,11 +86,11 @@ simdata <-
     design.data = dat, 
     fixed.eff = 
       list(
-        intercept = par.tab["(Intercept)",1],
+        intercept = inter,
         risk.level = log(OR)),
     distribution = "binomial",
-    rand.V = c(hh = par.tab["barcode_hh",1], 
-               village = par.tab["village",1]))
+    rand.V = c(hh = 0.4, #par.tab["barcode_hh",1], 
+               village = 0.6))
 
 
 vizDatFunc()
@@ -98,8 +100,8 @@ vizDatFunc()
 # that high and low risk areas have the same seroprevalence
 res.tab.fn <- function(...) {
     # create template data set
+    inter <- -2.197
     dat <- expand.grid(hh = 1:n.hh, village = 1:n.village, n = n)
-    print(sum(dat$n))
     # allocate villages to high and low prevalence in 1:1 ratio 
     dat$risk.level <- dat$village %% 2 - 0.5
     # simulate seropositives
@@ -108,19 +110,16 @@ res.tab.fn <- function(...) {
         design.data = dat, 
         fixed.eff = 
           list(
-            intercept = par.tab["(Intercept)",1],
+            intercept = inter,
             risk.level = log(OR)),
         distribution = "binomial",
-        rand.V = c(hh = par.tab["barcode_hh",1], 
-                   village = par.tab["village",1]))
+        rand.V = c(hh = 0.4, 
+                   village = 0.6))
     
     fit <- glmer(cbind(response, n - response) ~ risk.level + (1 | hh) +(1 | village), family = binomial, data = simdat)
     fit0 <- update(fit, ~ . - risk.level)
-    #coef(summary(fit))["risk.level", "Pr(>|z|)"] # Wald P not reliable - gives inflated type 1 error
     anova(fit, fit0)[2, "Pr(>Chisq)"]
 }
-
-
 
 
 #************assume c. 20 - 40% prevalence in high risk areas***********
@@ -131,7 +130,7 @@ n.village <- 24
 n.hh <- 20         # per village
 n <- 3             # no of animals per household
 # 1800 animals for 30 villages or 1440 for 24 villages
-par.tab["(Intercept)",] <- -2.197
+inter <- -2.197
 
 sim.res <- mclapply(1:nsim, res.tab.fn)
 
