@@ -11,7 +11,7 @@ The code is made available under a <a rel="license" href="http://creativecommons
 - **r_mozBirdSampling.R** - this R script contains the simulations used to estimate the number of replicates required to determine differences in the number of mosquitoes collected from three different bird species in two different locations.
 
 ## Sample size estimates for mosquito blood feeding
-- **r_mozBloodmealSampling.R** - this R script contains the simulations used to determine the sampling strategy to quantify the effect of houseohold host community composition on the proportion of vector blood meals taken on each host species present.
+- **r_mozBloodmealSampling.R** - this R script contains the simulations used to determine the sampling strategy to quantify the effect of household host community composition on the proportion of vector blood meals taken on each host species present.
 
 ## Sample size estimates for estimates of JEV prevalence in mosquitoes
 - **r_odeThreeHostVarMoz.R** - this file contains an ordinary differential equation model of Japanese encephalitis virus transmission used to help inform the magnitude of possible seasonal changes in mosquito JEV prevalence.
