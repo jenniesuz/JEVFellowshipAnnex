@@ -26,7 +26,6 @@ repSimsFunc <- function(trueFoi1=trueFoi1,trueFoi2=trueFoi2,trueFoi3=trueFoi3,nu
   clusterExport(cl,varlist=c("trueFoi1","trueFoi2","trueFoi3","numHosts","ageGroups","maxAge"))
   
   simFits <- parLapply(cl,1:1000,function(i){
-    pacman::p_load(bbmle, plyr) 
     source("r_MLEforceofInfectionFuncs.R")
     ests <- simulateDataFunc(trueFoi1=trueFoi1,trueFoi2=trueFoi2,trueFoi3=trueFoi3,numHosts=numHosts,ageGroups=ageGroups,maxAge=maxAge)
     return(ests)

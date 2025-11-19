@@ -6,17 +6,22 @@ library("parallel")
 library("plyr")
 library("MASS")
 
+library(devtools)
+devtools::install_github("pcdjohnson/GLMMmisc")
+library(GLMMmisc)
+
 lighttraps <- read.csv("RajshahiCxt.csv")
 byDay <- ddply(lighttraps,.(Date),varCount=var(Females))
 range(byDay[,2]) # 1 to 196
 mean(byDay[,2]) # c. 100
+
 
 lme4::glmer(Females ~ (1 | Date),
             family = "poisson", data =lighttraps)
 #1.58
 
 #***************************************************************
-numTraps<-5
+numTraps<-40
 traps <- 1:numTraps
 bird <- c("chicken","duck","pigeon")
 habitat <- c("household","rice")
@@ -45,6 +50,12 @@ moz.data<-
     ,theta=0.5
   )      # we are simulating 
 
+
+
+ggplot(moz.data) +
+  geom_boxplot((aes(x=bird,y=response))) +
+  ylab("Number of mosquitoes per trap per day") +
+  facet_wrap(~habitat)
 
 
 moz.pois <-
