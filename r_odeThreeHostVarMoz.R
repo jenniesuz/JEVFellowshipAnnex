@@ -92,3 +92,5 @@ sim <- function(init=initial, tseq = times, modFunction=mod
 
 
 simV <- Vectorize(sim)
+
+sim()
