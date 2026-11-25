@@ -25,12 +25,12 @@ source("SeroprevalenceFOISimFunc.R")
 
 ```
 
-## Sample size calculation for estimating JEV force of infection to humans
+## Sample size calculation for estimating difference in JEV force of infection to humans between 'high' and 'low' risk areas
 
 Estimates from Chapai Nawabganj by Duque et al. 2024 (https://www.science.org/doi/10.1126/sciadv.adp1657) indicate 19% seroprevalence and average force of infection of 0.007 per year. This compares with estimates from Quan et al (2020) (https://elifesciences.org/articles/51027) 0.001 in Japan to 0.507 in Guigang China. Besides those extreme values, FOI were generally between 0.05 and 0.2 with a median of 0.09.
 
 
-Function to calculate prevalence as a function of age based on FOI:
+Function to calculate prevalence as a function of age based on FOI (see SeroprevalenceFOISimFunc.R for function):
 ```{r}
 propImmFunc(lambda=0.009, age=20)*100  
 ```
@@ -38,21 +38,21 @@ propImmFunc(lambda=0.009, age=20)*100
 ```{r}
 propImmFunc(lambda=0.005, age=20)*100  
 ```
-A difference in FOI of 0.02 around the mean of 0.07 would lead to a difference in seroprevalence by age 20 of c. half
+A difference in FOI of 0.002 around the mean of 0.07 between high and low risk areas would lead to a difference in seroprevalence by age 20 of c.x2
 
-Simulate data as example before power analysis:
+Simulate data as example before power analysis (see SeroprevalenceFOISimFunc.R):
 ```{r}
-dat <- simulateSeroprevalence(lowLambda=0.005
-                                    ,highLambda=0.009
-                                    ,n.village=36
-                                    ,n.hh=30
-                                    ,people.in.household=1
-                                    ,ageMin=5
-                                    ,ageMax=90
-                                    ,sdLogFOI=1.5
-                                    ,ageSD=1.2)
+dat <- simulateSeroprevalence(lowLambda=0.005                 # assumed FOI at low risk site
+                                    ,highLambda=0.009         # assumed FOI at high risk site
+                                    ,n.village=36             # number of villages (pre-selected and subject to cattle serosurvey)
+                                    ,n.hh=30                  # number of households per village
+                                    ,people.in.household=1    # number of participants per household
+                                    ,ageMin=5                 # minimum age
+                                    ,ageMax=90                # maximum age
+                                    ,sdLogFOI=1.5             # sd lognormal distribution to add in random effect at village level
+                                    ,ageSD=1.2)               # sd lognormal distribution to add in random effect at participant level
 
-dat$ageGroup <- NA
+dat$ageGroup <- NA                                            # bin ages into categories
 dat$ageGroup[(dat$age > 5)&(dat$age <= 15)] <- 10
 dat$ageGroup[(dat$age > 16)&(dat$age <= 25)] <- 20
 dat$ageGroup[(dat$age > 26)&(dat$age <= 35)] <- 30
@@ -65,7 +65,7 @@ dat$ageGroup[(dat$age > 86)&(dat$age <= 95)] <- 90
 
 datSummary <- ddply(dat,.(risk.level,ageGroup),summarise,propImm=sum(Infected),total=length(Infected))
 
-ci <- binom.confint(x=datSummary$propImm,n=datSummary$total,methods="exact")
+ci <- binom.confint(x=datSummary$propImm,n=datSummary$total,methods="exact")      # calculate confidence intervals
 datSummary$mean <- ci$mean
 datSummary$lower <- ci$lower
 datSummary$upper <- ci$upper
